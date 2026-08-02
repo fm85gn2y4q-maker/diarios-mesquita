@@ -86,7 +86,7 @@ def acervo(tmp_path: Path) -> Acervo:
 
 
 def test_acha_pelo_termo_sem_acento(acervo: Acervo):
-    achados, parcial, _ = acervo.pesquisar("desapropriacao")
+    achados, parcial, _, _ = acervo.pesquisar("desapropriacao")
     assert achados, "acento não pode separar a consulta do texto"
     assert not parcial
     assert "3.204" in achados[0].achado
@@ -94,32 +94,32 @@ def test_acha_pelo_termo_sem_acento(acervo: Acervo):
 
 def test_degrada_para_parcial_em_vez_de_vazio(acervo: Acervo):
     """A pergunta do advogado traz palavras a mais; devolver nada é pior."""
-    achados, parcial, _ = acervo.pesquisar("desapropriação helicóptero submarino")
+    achados, parcial, _, _ = acervo.pesquisar("desapropriação helicóptero submarino")
     assert achados
     assert parcial is True
 
 
 def test_palavra_de_formulacao_nao_zera_a_busca(acervo: Acervo):
-    achados, parcial, _ = acervo.pesquisar("existe algum decreto de desapropriação?")
+    achados, parcial, _, _ = acervo.pesquisar("existe algum decreto de desapropriação?")
     assert achados
     assert not parcial, "as vazias deveriam ter sido descartadas, não exigidas"
 
 
 def test_marca_de_retificacao_e_detectada(acervo: Acervo):
-    achados, _, _ = acervo.pesquisar("crédito adicional suplementar")
+    achados, _, _, _ = acervo.pesquisar("crédito adicional suplementar")
     assert achados
     assert achados[0].tem_marca_de_retificacao
     assert "aviso_retificacao" in achados[0].para_dict()
 
 
 def test_pagina_sem_retificacao_nao_recebe_aviso(acervo: Acervo):
-    achados, _, _ = acervo.pesquisar("fiscalizar o contrato")
+    achados, _, _, _ = acervo.pesquisar("fiscalizar o contrato")
     assert achados
     assert "aviso_retificacao" not in achados[0].para_dict()
 
 
 def test_origem_ocr_vira_aviso_na_resposta(acervo: Acervo):
-    achados, _, _ = acervo.pesquisar("resumo geral da receita")
+    achados, _, _, _ = acervo.pesquisar("resumo geral da receita")
     assert achados
     d = achados[0].para_dict()
     assert d["origem_do_texto"] == "reconhecido por OCR"
@@ -127,18 +127,18 @@ def test_origem_ocr_vira_aviso_na_resposta(acervo: Acervo):
 
 
 def test_citacao_tem_o_que_vai_para_a_peca(acervo: Acervo):
-    achados, _, _ = acervo.pesquisar("desapropriação")
+    achados, _, _, _ = acervo.pesquisar("desapropriação")
     assert achados[0].citacao == "DOM de Mesquita, 13/05/2022, Nº 001485, p. 1"
 
 
 def test_filtro_de_data_por_ano_inclui_o_ano_inteiro(acervo: Acervo):
     """data_max='2022' não pode excluir dezembro por comparação textual."""
-    achados, _, _ = acervo.pesquisar("desapropriação", data_min="2022", data_max="2022")
+    achados, _, _, _ = acervo.pesquisar("desapropriação", data_min="2022", data_max="2022")
     assert achados, "o recorte por ano cortou o próprio ano"
 
 
 def test_filtro_de_data_exclui_fora_do_periodo(acervo: Acervo):
-    achados, _, _ = acervo.pesquisar("desapropriação", data_min="2023-01-01")
+    achados, _, _, _ = acervo.pesquisar("desapropriação", data_min="2023-01-01")
     assert not achados
 
 

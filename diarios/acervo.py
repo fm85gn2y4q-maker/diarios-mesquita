@@ -216,25 +216,50 @@ class Acervo:
         data_min: str | None = None,
         data_max: str | None = None,
         limite: int = 10,
-    ) -> tuple[list[Passagem], bool, str]:
-        """Procura no texto das páginas.
+        deslocamento: int = 0,
+        ordenar: str = "relevancia",
+    ) -> tuple[list[Passagem], bool, str, int]:
+        """Procura no texto das páginas. Devolve também o TOTAL de ocorrências.
 
         Exige todos os termos; não achando, repete aceitando qualquer um.
         Devolver a página mais próxima avisando que a correspondência foi
         parcial é melhor do que devolver vazio porque a pergunta trazia uma
         palavra a mais.
+
+        O total não é enfeite. Medido nesta base: "IPTU" casa em 3.385 páginas
+        e um nome de procurador em 930. Devolvendo 30 sem dizer quantas
+        existem, o advogado lê "estas são as ocorrências" onde o certo é
+        "estas são trinta de novecentas e trinta" — e contar custa 2 ms.
         """
         expressao = ""
         for operador in ("AND", "OR"):
             expressao = montar_consulta_fts(consulta, operador)
             if not expressao:
-                return [], False, ""
-            achados = self._consultar(expressao, data_min, data_max, limite)
+                return [], False, "", 0
+            achados = self._consultar(expressao, data_min, data_max, limite,
+                                      deslocamento, ordenar)
             if achados:
-                return achados, operador == "OR", expressao
-        return [], False, expressao
+                total = self._contar("pagina_fts", expressao, data_min, data_max)
+                return achados, operador == "OR", expressao, total
+        return [], False, expressao, 0
 
-    def _consultar(self, expressao, data_min, data_max, limite) -> list[Passagem]:
+    def _contar(self, tabela, expressao, data_min, data_max) -> int:
+        alvo = "pagina" if tabela == "pagina_fts" else "ato"
+        sql = [f"SELECT COUNT(*) FROM {tabela} f",
+               f"JOIN {alvo} x ON x.id = f.rowid",
+               "JOIN edicao e ON e.id = x.edicao_id",
+               f"WHERE {tabela} MATCH ?"]
+        parametros: list[Any] = [expressao]
+        if data_min:
+            sql.append("AND e.data >= ?")
+            parametros.append(_para_iso(data_min))
+        if data_max:
+            sql.append("AND e.data <= ?")
+            parametros.append(_para_iso(data_max, fim=True))
+        return self.conexao.execute(" ".join(sql), parametros).fetchone()[0]
+
+    def _consultar(self, expressao, data_min, data_max, limite, deslocamento=0,
+                   ordenar="relevancia") -> list[Passagem]:
         sql = [
             "SELECT e.data, e.numero, e.descricao, e.paginas, e.arquivo, e.url,",
             "       p.pagina, p.origem, p.texto,",
@@ -251,8 +276,11 @@ class Acervo:
         if data_max:
             sql.append("AND e.data <= ?")
             parametros.append(_para_iso(data_max, fim=True))
-        sql.append("ORDER BY bm25(pagina_fts), e.data DESC LIMIT ?")
+        ordem = ("e.data DESC, p.pagina" if ordenar == "data"
+                 else "bm25(pagina_fts), e.data DESC")
+        sql.append(f"ORDER BY {ordem} LIMIT ? OFFSET ?")
         parametros.append(max(1, min(int(limite), 30)))
+        parametros.append(max(0, int(deslocamento)))
 
         linhas = self.conexao.execute(" ".join(sql), parametros).fetchall()
         return [
@@ -318,20 +346,43 @@ class Acervo:
         ano_min: int | None = None,
         ano_max: int | None = None,
         limite: int = 10,
-    ) -> tuple[list[dict], bool, str]:
+        deslocamento: int = 0,
+        ordenar: str = "relevancia",
+    ) -> tuple[list[dict], bool, str, int]:
         expressao = ""
         for operador in ("AND", "OR"):
             expressao = montar_consulta_fts(consulta, operador)
             if not expressao:
-                return [], False, ""
+                return [], False, "", 0
             achados = self._consultar_atos(
-                expressao, especie, orgao, ano_min, ano_max, limite
+                expressao, especie, orgao, ano_min, ano_max, limite,
+                deslocamento, ordenar
             )
             if achados:
-                return achados, operador == "OR", expressao
-        return [], False, expressao
+                total = self._contar_atos(expressao, especie, orgao, ano_min, ano_max)
+                return achados, operador == "OR", expressao, total
+        return [], False, expressao, 0
 
-    def _consultar_atos(self, expressao, especie, orgao, ano_min, ano_max, limite):
+    def _contar_atos(self, expressao, especie, orgao, ano_min, ano_max) -> int:
+        sql = ["SELECT COUNT(*) FROM ato_fts f JOIN ato a ON a.id = f.rowid",
+               "JOIN edicao e ON e.id = a.edicao_id WHERE ato_fts MATCH ?"]
+        parametros: list[Any] = [expressao]
+        if especie:
+            sql.append("AND a.especie = ?")
+            parametros.append(especie.strip().lower().replace(" ", "_"))
+        if orgao:
+            sql.append("AND a.orgao = ?")
+            parametros.append(orgao.strip().upper())
+        if ano_min:
+            sql.append("AND e.data >= ?")
+            parametros.append(f"{int(ano_min)}-01-01")
+        if ano_max:
+            sql.append("AND e.data <= ?")
+            parametros.append(f"{int(ano_max)}-12-31")
+        return self.conexao.execute(" ".join(sql), parametros).fetchone()[0]
+
+    def _consultar_atos(self, expressao, especie, orgao, ano_min, ano_max, limite,
+                        deslocamento=0, ordenar="relevancia"):
         sql = [
             "SELECT a.*, e.data AS data_edicao, e.url,",
             "       snippet(ato_fts, 2, '', '', ' … ', 28) AS achado",
@@ -352,8 +403,10 @@ class Acervo:
         if ano_max:
             sql.append("AND e.data <= ?")
             parametros.append(f"{int(ano_max)}-12-31")
-        sql.append("ORDER BY bm25(ato_fts), e.data DESC LIMIT ?")
+        ordem = ("e.data DESC" if ordenar == "data" else "bm25(ato_fts), e.data DESC")
+        sql.append(f"ORDER BY {ordem} LIMIT ? OFFSET ?")
         parametros.append(max(1, min(int(limite), 30)))
+        parametros.append(max(0, int(deslocamento)))
         return [self._ato_para_dict(l) for l in
                 self.conexao.execute(" ".join(sql), parametros)]
 

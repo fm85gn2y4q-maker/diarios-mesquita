@@ -109,6 +109,31 @@ prova de que ele não foi publicado.
 Trabalhando com página, o erro mais fácil continua sendo atribuir ao ato do
 cabeçalho um trecho que é do ato vizinho: confirme com `ler_pagina`.
 
+PERGUNTA EXAUSTIVA ("TODAS AS VEZES QUE X APARECEU") — LEIA ISTO
+
+É o modo de uso em que esta base mais engana, e o caso abaixo aconteceu de
+verdade. Perguntado por *todas* as nomeações e exonerações de um procurador, o
+servidor devolveu a nomeação e afirmou não haver exoneração. Havia: a Portaria
+049/2025, de 16/01/2025. O nome dele casa em **930 páginas**; por relevância, a
+página da exoneração ocupa a **posição 852**. Nenhum teto de resultados a
+alcançaria, e nada na resposta dizia que 900 páginas tinham ficado de fora.
+
+Três regras, e nenhuma é opcional:
+
+1. **Leia `total_de_ocorrencias` antes de concluir qualquer coisa.** Ele diz
+   quantas casam, não quantas você viu. Havendo `aviso_de_corte`, você está
+   olhando uma fatia — e afirmar "não há" a partir de uma fatia é o erro que
+   custa caro.
+2. **Prefira `pesquisar_atos`**, e some o verbo à consulta ("exonerar",
+   "nomear", "designar"). No caso acima, a busca por atos com o nome mais
+   "exonerar" devolvia 4 resultados, e o certo era o segundo. A busca por
+   páginas devolvia 930, com o certo em 852º.
+3. **Use `ordenar="data"` e percorra com `deslocamento`.** Por relevância, o
+   ato isolado afunda: quem assina dezenas de pareceres tem dezenas de páginas
+   "mais relevantes" que a única em que foi exonerado.
+
+Fechada a varredura, diga quantas ocorrências existiam e quantas você examinou.
+
 ANTES DE CITAR UM ATO, CHAME `historico_do_ato`
 
 Ele devolve todas as publicações daquele número — mais de uma significa
@@ -182,6 +207,8 @@ def construir(
         data_min: str | None = None,
         data_max: str | None = None,
         limite: int = 10,
+        deslocamento: int = 0,
+        ordenar: str = "relevancia",
     ) -> dict[str, Any]:
         """Procura no texto das páginas do Diário Oficial de Mesquita.
 
@@ -194,9 +221,14 @@ def construir(
             data_min: data inicial (24/07/2026, 2026-07-24 ou 2026).
             data_max: data final, nos mesmos formatos.
             limite: quantos trechos devolver (máximo 30).
+            deslocamento: quantos pular, para ver além dos primeiros.
+            ordenar: "relevancia" (padrão) ou "data". Use "data" quando a
+                pergunta for exaustiva ("todas as vezes que X apareceu"): por
+                relevância, o caso isolado afunda no ranking.
         """
-        achados, parcial, expressao = acervo.pesquisar(
-            consulta, data_min=data_min, data_max=data_max, limite=limite
+        achados, parcial, expressao, total = acervo.pesquisar(
+            consulta, data_min=data_min, data_max=data_max,
+            limite=limite, deslocamento=deslocamento, ordenar=ordenar,
         )
         if not achados:
             observacao = (
@@ -215,10 +247,20 @@ def construir(
             observacao = None
 
         com_marca = sum(1 for a in achados if a.tem_marca_de_retificacao)
+        vistos = deslocamento + len(achados)
+        truncado = total > vistos
         return {
             "consulta": consulta,
             "expressao_executada": expressao,
+            "total_de_ocorrencias": total,
             "quantidade": len(achados),
+            "mostrando": f"{deslocamento + 1}-{vistos} de {total}" if total else "0",
+            "ha_mais_resultados": truncado,
+            "aviso_de_corte": (
+                f"Você está vendo {len(achados)} de {total} páginas que casam. "
+                f"NÃO diga que estas são todas as ocorrências. Para as demais, "
+                f"repita com deslocamento={vistos}, ou restrinja por data."
+            ) if truncado else None,
             "correspondencia_parcial": parcial,
             "resultados": [a.para_dict() for a in achados],
             "observacao": observacao,
@@ -305,6 +347,8 @@ def construir(
         ano_min: int | None = None,
         ano_max: int | None = None,
         limite: int = 10,
+        deslocamento: int = 0,
+        ordenar: str = "relevancia",
     ) -> dict[str, Any]:
         """Procura o ATO — a portaria, o decreto, a lei —, não a página.
 
@@ -320,10 +364,13 @@ def construir(
             ano_min: ano mais antigo aceito.
             ano_max: ano mais recente aceito.
             limite: quantos atos devolver (máximo 30).
+            deslocamento: quantos pular, para ver além dos primeiros.
+            ordenar: "relevancia" (padrão) ou "data", para pergunta exaustiva.
         """
-        achados, parcial, expressao = acervo.pesquisar_atos(
-            consulta, especie=especie, orgao=orgao,
-            ano_min=ano_min, ano_max=ano_max, limite=limite,
+        achados, parcial, expressao, total = acervo.pesquisar_atos(
+            consulta, especie=especie, orgao=orgao, ano_min=ano_min,
+            ano_max=ano_max, limite=limite, deslocamento=deslocamento,
+            ordenar=ordenar,
         )
         if not achados:
             observacao = (
@@ -339,10 +386,19 @@ def construir(
             )
         else:
             observacao = None
+        vistos = deslocamento + len(achados)
         return {
             "consulta": consulta,
             "expressao_executada": expressao,
+            "total_de_ocorrencias": total,
             "quantidade": len(achados),
+            "mostrando": f"{deslocamento + 1}-{vistos} de {total}" if total else "0",
+            "ha_mais_resultados": total > vistos,
+            "aviso_de_corte": (
+                f"Você está vendo {len(achados)} de {total} atos que casam. "
+                f"NÃO diga que estes são todos. Para os demais, repita com "
+                f"deslocamento={vistos}, ou restrinja por espécie, órgão ou ano."
+            ) if total > vistos else None,
             "correspondencia_parcial": parcial,
             "resultados": achados,
             "observacao": observacao,
@@ -423,15 +479,39 @@ def construir(
         Args:
             query: o que procurar.
         """
-        achados, _, _ = acervo.pesquisar(query, limite=10)
+        # Procura o ATO antes da página, e a razão foi medida num caso real:
+        # a exoneração de um procurador (Portaria 049/2025) aparecia na posição
+        # 852 de 930 páginas pela busca textual — invisível sob qualquer teto —
+        # e na 2ª de 4 pela busca de atos. O ato é a unidade certa; a página é
+        # a rede de segurança para o que não é ato numerado.
+        atos, _, _, total_atos = acervo.pesquisar_atos(query, limite=10)
+        if atos:
+            return {
+                "total_de_ocorrencias": total_atos,
+                "aviso_de_corte": (
+                    f"{total_atos} atos casam; estes são os 10 mais relevantes. "
+                    "Para pergunta exaustiva, use `pesquisar_atos` com "
+                    "ordenar='data' e percorra por `deslocamento`."
+                ) if total_atos > len(atos) else None,
+                "results": [
+                    {"id": f"ato:{a['publicado_em']}#{a['especie']}#{a['numero']}",
+                     "title": a["citacao"],
+                     "text": a.get("ementa") or a.get("trecho") or "",
+                     "url": a["url_pdf"]}
+                    for a in atos
+                ],
+            }
+        achados, _, _, total = acervo.pesquisar(query, limite=10)
         return {
+            "total_de_ocorrencias": total,
+            "aviso_de_corte": (
+                f"{total} páginas casam; estas são as 10 mais relevantes. "
+                "Para pergunta exaustiva, use `pesquisar_publicacoes` com "
+                "ordenar='data' e percorra por `deslocamento`."
+            ) if total > len(achados) else None,
             "results": [
-                {
-                    "id": f"{a.data}#{a.pagina}",
-                    "title": a.citacao,
-                    "text": a.achado,
-                    "url": a.url,
-                }
+                {"id": f"{a.data}#{a.pagina}", "title": a.citacao,
+                 "text": a.achado, "url": a.url}
                 for a in achados
             ]
         }
