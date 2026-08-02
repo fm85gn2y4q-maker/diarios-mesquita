@@ -26,10 +26,9 @@ COPY diarios/ ./diarios/
 #
 # Publicar acervo novo é rodar `python preparar_release.py <versão>`, anexar o
 # .gz à release e trocar estas duas linhas.
-# O sha256 abaixo é o do dist/diarios-mesquita-v1.0.0.db.gz já gerado (82,5 MB)
-# e conferido de ponta a ponta. Só falta trocar SEU-USUARIO pelo dono do
-# repositório, depois de publicar a release.
-ARG ACERVO=https://github.com/SEU-USUARIO/diarios-mesquita/releases/download/v1.0.0/diarios-mesquita-v1.0.0.db.gz
+# O sha256 abaixo é o do dist/diarios-mesquita-v1.0.0.db.gz publicado na release
+# v1.0.0, conferido de ponta a ponta (comprimir → hash → descomprimir → servir).
+ARG ACERVO=https://github.com/fm85gn2y4q-maker/diarios-mesquita/releases/download/v1.0.0/diarios-mesquita-v1.0.0.db.gz
 ARG ACERVO_SHA256=f072188b204eeb0e1f87cc7234770b995bfe92a29757762b30dac8161a2af942
 COPY instalar_acervo.py ./
 RUN python instalar_acervo.py "$ACERVO" dados/diarios.sqlite "$ACERVO_SHA256"

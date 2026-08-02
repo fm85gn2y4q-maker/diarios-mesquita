@@ -52,7 +52,7 @@ def _numeros(banco: Path) -> str:
             f"({ocr} por OCR), {atos} atos segmentados")
 
 
-def preparar(versao: str, repositorio: str = "SEU-USUARIO/diarios-mesquita") -> int:
+def preparar(versao: str, repositorio: str = "fm85gn2y4q-maker/diarios-mesquita") -> int:
     if not BANCO.exists():
         print(f"Acervo não encontrado em {BANCO}. Rode a coleta antes.",
               file=sys.stderr)
