@@ -75,21 +75,26 @@ não há curinga: a comparação de Host é exata.
 
 Terminado o primeiro deploy, em **Environment**:
 
-| Variável | Valor |
-|---|---|
-| `DIARIOS_DOMINIOS` | `diarios-mesquita.onrender.com` *(sem `https://`)* |
-| `DIARIOS_URL_PUBLICA` | `https://diarios-mesquita.onrender.com` |
-| `DIARIOS_SEGREDO_OAUTH` | valor longo e aleatório — use **Generate** no Render |
+| Variável | Valor | quem preenche |
+|---|---|---|
+| `DIARIOS_DOMINIOS` | `diarios-mesquita.onrender.com` *(sem `https://`)* | você |
+| `DIARIOS_URL_PUBLICA` | `https://diarios-mesquita.onrender.com` | você |
+| `DIARIOS_SEGREDO_OAUTH` | valor longo e aleatório | o Render, sozinho |
 
 `DIARIOS_URL_PUBLICA` liga o fluxo OAuth, que o **ChatGPT exige** para aceitar
 um conector. O Claude conecta sem ele.
 
-**As três, não duas.** `DIARIOS_SEGREDO_OAUTH` só nasce sozinho quando o
-serviço vem de um Blueprint (`generateValue: true`). Criando o serviço à mão
-por **New → Web Service**, ela não existe, e o servidor sorteia um segredo novo
-a cada partida. Como a instância gratuita hiberna, isso invalida todas as
-autorizações do ChatGPT a cada soneca: o conector pede autorização o dia
-inteiro, e parece defeito do acervo. O log avisa quando falta.
+**Vindo do Blueprint, são duas a preencher, não três.** O `render.yaml` declara
+`generateValue: true` para `DIARIOS_SEGREDO_OAUTH`, e o Render a cria no
+primeiro deploy. Confira que ela existe mesmo assim: **criando o serviço à mão**
+por *New → Web Service*, o `render.yaml` é ignorado e ela não nasce — aí o
+servidor sorteia um segredo novo a cada partida, e como a instância gratuita
+hiberna, toda autorização do ChatGPT morre a cada soneca. O conector passa a
+pedir autorização o dia inteiro, e parece defeito do acervo. O log avisa:
+
+```
+DIARIOS_SEGREDO_OAUTH não definido: usando um segredo temporário.
+```
 
 ## 6. Ligar nos clientes
 
