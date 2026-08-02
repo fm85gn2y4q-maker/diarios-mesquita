@@ -45,7 +45,10 @@ from pydantic import AnyHttpUrl, AnyUrl
 
 log = logging.getLogger(__name__)
 
-ESCOPO = "jurisprudencia"
+# Rótulo do escopo anunciado nos metadados de OAuth. Herdado do acervo de
+# jurisprudência quando este módulo foi reaproveitado; aqui o acervo é outro, e
+# o nome aparece para quem inspeciona o conector.
+ESCOPO = "diario-oficial"
 VALIDADE_CODIGO = 300               # 5 min: só atravessa o redirecionamento
 VALIDADE_ACESSO = 60 * 60 * 12      # 12 h
 VALIDADE_ATUALIZACAO = 60 * 60 * 24 * 90
