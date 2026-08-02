@@ -1,0 +1,5 @@
+# Só o que o servidor MCP precisa em produção.
+# A coleta e o OCR (pymupdf, rapidocr, tesseract) rodam na sua máquina, em
+# ~/Mesquita_Diarios_Oficiais, e não vão para a imagem: ela apenas serve o
+# acervo já construído.
+mcp>=1.28,<2

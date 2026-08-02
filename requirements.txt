@@ -1,0 +1,5 @@
+# O servidor só lê o SQLite pronto — não processa PDF, não faz OCR.
+# A construção do acervo (baixar, extrair, OCR) mora em ~/Mesquita_Diarios_Oficiais
+# e tem as suas próprias dependências, num venv separado.
+mcp>=1.28
+pytest>=8.0
