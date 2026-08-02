@@ -67,10 +67,85 @@ PADRAO_RETIFICACAO = re.compile(
 )
 
 
+# Separar quem ASSINA de quem é OBJETO do ato. Medido nesta base: o nome do
+# Prefeito casa em 750 atos, e em 748 ele é o signatário — buscar por nome de
+# autoridade devolve, quase inteiro, o que ela despachou, e não o que lhe
+# aconteceu. O sinal que funciona é o verbo dispositivo ANTES do nome
+# ("Exonerar a pedido, FULANO…"); o contrário — cargo na linha seguinte ao
+# nome — é bloco de assinatura.
+VERBO_DISPOSITIVO = re.compile(
+    r"\b(exonerar|exonerad[oa]s?|nomear|nomead[oa]s?|designar|designad[oa]s?|"
+    r"conceder|conced[ei]d[oa]s?|contratar|contratad[oa]s?|admitir|admitid[oa]s?|"
+    r"remover|promover|rescindir|aposentar|tornar sem efeito|lotar|transferir|"
+    r"prorrogar|instaurar|suspender|advertir|penalizar)\b",
+    re.IGNORECASE,
+)
+CARGO_EM_ASSINATURA = re.compile(
+    r"^(procurador|procuradora|secret[áa]ri[oa]|prefeito|vice-prefeito|diretor|"
+    r"diretora|presidente|chefe|coordenador|coordenadora|membro|titular|"
+    r"suplente|assessor|assessora|subsecret[áa]ri[oa]|controlador)",
+    re.IGNORECASE,
+)
+PAPEIS = {
+    "objeto": "a pessoa é objeto do ato (nomeada, exonerada, designada…)",
+    "assinatura": "a pessoa assina ou é citada como autoridade",
+    "indefinido": "não foi possível classificar — leia o ato",
+}
+
+
+def papel_no_ato(texto: str, nome: str) -> str:
+    """Classifica, por heurística, o papel da pessoa no ato.
+
+    É heurística e a resposta diz isso: 25% dos casos medidos ficam em
+    `indefinido`, e esses não podem ser descartados em silêncio — some-los
+    seria repetir, de outro jeito, o erro do corte mudo.
+    """
+    # O token mais LONGO, não o último: "da Costa" é sobrenome corrente e casa
+    # na primeira linha errada do ato, enquanto "Menegatti" identifica. Foi o
+    # que fez a primeira versão classificar 167 atos e não achar nenhum objeto.
+    particulas = {"da", "de", "do", "das", "dos", "e", "dr", "dra"}
+    alvo = [t for t in sem_acento(nome).split() if t not in particulas and len(t) > 3]
+    if not alvo:
+        return "indefinido"
+    chave = max(alvo, key=len)
+
+    linhas = texto.splitlines()
+    achou_assinatura = False
+    # Todas as ocorrências, não a primeira: num ato que exonera A e é assinado
+    # por B, o nome de A pode aparecer depois do de B na linearização das
+    # colunas. Bastando uma ocorrência regida por verbo dispositivo, é objeto.
+    for i, linha in enumerate(linhas):
+        if chave not in sem_acento(linha):
+            continue
+        contexto = " ".join(linhas[max(0, i - 1):i + 1])
+        corte = sem_acento(contexto).find(chave)
+        antes = contexto[:corte] if corte > 0 else contexto
+        if VERBO_DISPOSITIVO.search(antes[-160:]):
+            return "objeto"
+        seguinte = linhas[i + 1].strip() if i + 1 < len(linhas) else ""
+        if CARGO_EM_ASSINATURA.match(seguinte):
+            achou_assinatura = True
+    return "assinatura" if achou_assinatura else "indefinido"
+
+
 def sem_acento(texto: str) -> str:
     return "".join(
         c for c in unicodedata.normalize("NFKD", texto) if not unicodedata.combining(c)
     ).lower()
+
+
+def _trecho_ao_redor(texto: str, nome: str, margem: int = 220) -> str:
+    """O pedaço do ato em que o nome aparece, para leitura direta."""
+    particulas = {"da", "de", "do", "das", "dos", "e", "dr", "dra"}
+    alvo = [t for t in sem_acento(nome).split() if t not in particulas and len(t) > 3]
+    plano = " ".join(texto.split())
+    if not alvo:
+        return plano[:2 * margem]
+    corte = sem_acento(plano).find(max(alvo, key=len))
+    if corte < 0:
+        return plano[:2 * margem]
+    inicio = max(0, corte - margem)
+    return ("… " if inicio else "") + plano[inicio:corte + margem] + " …"
 
 
 def montar_consulta_fts(texto: str, operador: str = "AND") -> str:
@@ -442,6 +517,54 @@ class Acervo:
                 "republicação."
             )
         return d
+
+    def atos_sobre_pessoa(
+        self, nome: str, papel: str = "objeto", limite: int = 30,
+        ano_min: int | None = None, ano_max: int | None = None,
+    ) -> dict[str, Any]:
+        """Acha os atos de uma pessoa separando o que ela ASSINOU do que lhe aconteceu.
+
+        Buscar por nome de autoridade sem isto devolve uma enxurrada inútil: o
+        nome do Prefeito casa em 750 atos, e em 748 ele é apenas quem assina.
+        """
+        expressao = montar_consulta_fts(nome, "AND")
+        if not expressao:
+            return {"nome": nome, "resultados": [], "total_examinado": 0}
+
+        sql = ["SELECT a.*, e.data AS data_edicao, e.url",
+               "FROM ato_fts f JOIN ato a ON a.id = f.rowid",
+               "JOIN edicao e ON e.id = a.edicao_id",
+               "WHERE ato_fts MATCH ?"]
+        parametros: list[Any] = [expressao]
+        if ano_min:
+            sql.append("AND e.data >= ?")
+            parametros.append(f"{int(ano_min)}-01-01")
+        if ano_max:
+            sql.append("AND e.data <= ?")
+            parametros.append(f"{int(ano_max)}-12-31")
+        sql.append("ORDER BY e.data DESC")
+
+        contagem = {"objeto": 0, "assinatura": 0, "indefinido": 0}
+        escolhidos: list[dict] = []
+        aceitos = {papel} if papel in PAPEIS else set(PAPEIS)
+        for linha in self.conexao.execute(" ".join(sql), parametros):
+            qual = papel_no_ato(linha["texto"], nome)
+            contagem[qual] += 1
+            if qual in aceitos and len(escolhidos) < max(1, min(int(limite), 50)):
+                item = self._ato_para_dict(linha)
+                item["papel_da_pessoa"] = qual
+                # Sem o trecho, a portaria de exoneração chega como uma citação
+                # vazia: portaria não tem ementa entre aspas, e o advogado
+                # precisa ler o que o ato fez antes de abrir o PDF.
+                item["trecho"] = _trecho_ao_redor(linha["texto"], nome)
+                escolhidos.append(item)
+        return {
+            "nome": nome,
+            "papel_pedido": papel,
+            "total_examinado": sum(contagem.values()),
+            "classificacao": contagem,
+            "resultados": escolhidos,
+        }
 
     def localizar_ato(
         self, especie: str, numero: str, ano: int | None = None,

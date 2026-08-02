@@ -410,6 +410,51 @@ def construir(
         }
 
     @mcp.tool()
+    def atos_sobre_pessoa(
+        nome: str,
+        papel: str = "objeto",
+        ano_min: int | None = None,
+        ano_max: int | None = None,
+        limite: int = 30,
+    ) -> dict[str, Any]:
+        """Atos de uma pessoa, separando o que ela ASSINOU do que lhe aconteceu.
+
+        Use esta, e não `pesquisar_atos`, quando a pergunta for sobre a vida
+        funcional de alguém — nomeação, exoneração, designação, licença.
+        Buscar o nome cru devolve enxurrada: medido nesta base, o nome do
+        Prefeito casa em 750 atos e em 748 ele é só quem assina.
+
+        A classificação é heurística e a resposta devolve as três contagens.
+        `indefinido` não é ausência: é ato que precisa ser lido.
+
+        Args:
+            nome: nome da pessoa, completo ou parcial.
+            papel: "objeto" (padrão), "assinatura", "indefinido" ou "todos".
+            ano_min: ano mais antigo aceito.
+            ano_max: ano mais recente aceito.
+            limite: quantos atos devolver (máximo 50).
+        """
+        d = acervo.atos_sobre_pessoa(
+            nome, papel=papel, limite=limite, ano_min=ano_min, ano_max=ano_max
+        )
+        c = d.get("classificacao", {})
+        d["explicacao_da_classificacao"] = {
+            "objeto": "a pessoa é objeto do ato (nomeada, exonerada, designada…)",
+            "assinatura": "a pessoa assina ou aparece como autoridade",
+            "indefinido": "não foi possível classificar — leia o ato antes de descartar",
+        }
+        d["aviso"] = (
+            f"De {d.get('total_examinado', 0)} atos em que o nome aparece: "
+            f"{c.get('objeto', 0)} como objeto, {c.get('assinatura', 0)} como "
+            f"assinatura, {c.get('indefinido', 0)} indefinidos. A separação é "
+            "heurística, feita pelo verbo que antecede o nome. Concluindo que "
+            "não houve determinado ato, examine antes os indefinidos com "
+            "papel=\"indefinido\" — a heurística erra, e errar aqui é afirmar "
+            "que algo não foi publicado quando foi."
+        )
+        return d
+
+    @mcp.tool()
     def historico_do_ato(
         especie: str, numero: str, ano: int | None = None, limite: int = 20,
     ) -> dict[str, Any]:
