@@ -1,7 +1,7 @@
 # Diário Oficial de Mesquita/RJ — servidor MCP
 
 Expõe o Diário Oficial do Município de Mesquita como ferramenta de pesquisa
-para o Claude e o ChatGPT. **2.658 edições, 27.921 páginas, de 15/07/2015 a
+para o Claude e o ChatGPT. **2.659 edições, 27.931 páginas, de 15/07/2015 a
 hoje**, coletadas do Portal da Transparência da Prefeitura.
 
 É o terceiro acervo construído sobre a mesma arquitetura, depois do Ementário
@@ -31,7 +31,7 @@ Medido: **89,6% das edições trazem mais de um ato**, mediana de 6 por edição
 uma delas com 106. Uma página pode conter o fim de uma portaria, um decreto
 inteiro e o começo de um extrato de contrato.
 
-Daí a segmentação: **17.755 atos** com número, órgão emissor, ementa e
+Daí a segmentação: **17.765 atos** com número, órgão emissor, ementa e
 intervalo de páginas — portaria (14.506), decreto (2.246), resolução (660),
 lei (332) e lei complementar (11). O ato atravessa a virada da página quando é
 o caso; o maior deles ocupa 138 páginas, porque a portaria manda republicar o
@@ -90,11 +90,14 @@ se executam nesta ordem e são todos incrementais — reexecutar só processa o 
 chegou depois:
 
 ```bash
-python baixar_diarios.py --fonte municipio   # baixa o que falta do portal
-python extrair_texto.py                      # texto nativo -> acervo.db
-.venv-ocr/Scripts/python ocr_paginas.py      # OCR das páginas digitalizadas
-python segmentar_atos.py                     # corta as edições em atos
+python atualizar.py                # os quatro passos, na ordem certa
+python atualizar.py --release 1.2.0  # e já prepara o pacote para publicar
 ```
+
+Os quatro passos que ele encadeia — baixar, extrair, reconhecer, segmentar —
+também rodam soltos, mas a ordem não é arbitrária: o OCR só enxerga o que o
+extrator marcou como página sem texto, e a segmentação lê o que os dois
+produziram.
 
 O OCR mora num venv separado de propósito: ele arrasta dependências pesadas que
 não têm por que conviver com o resto do ambiente.
