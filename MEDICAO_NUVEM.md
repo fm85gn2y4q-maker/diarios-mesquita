@@ -1,6 +1,6 @@
-# Medição do ambiente da nuvem — viabilidade da coleta do Diário Oficial de Mesquita
+# Medição do ambiente da nuvem
 
-Medição executada em 2026-08-04, em sessão de Claude Code on the web (ambiente remoto efêmero). Nenhuma alteração de projeto foi feita além deste arquivo.
+Medição automatizada, executada em 2026-08-04, para verificar se esta sessão de nuvem (Claude Code on the web) serve para rodar a coleta do Diário Oficial de Mesquita. Nenhuma alteração foi feita no projeto além deste arquivo.
 
 ## 1. Ambiente
 
@@ -37,41 +37,54 @@ root
 Comando: `sudo -n true; echo $?`
 
 ```
-sudo_exit=0
+0
 ```
 
-Rodando como `root` diretamente; sudo sem senha funciona (exit 0). Não é necessário sudo para instalar pacotes, já que a sessão já é root.
+(Já executando como root, então sudo sem senha responde imediatamente com sucesso.)
 
 ## 2. Tesseract
 
-Comando: `apt-get update`
+Comando: `sudo apt-get update`
 
-Resultado: bem-sucedido para os repositórios oficiais do Ubuntu (archive.ubuntu.com, security.ubuntu.com, download.docker.com). Duas PPAs de terceiros (deadsnakes, ondrej/php) falharam por bloqueio do proxy da sessão:
-
-```
-Err:4 https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble InRelease
-  Invalid response from proxy: HTTP/1.1 403 Forbidden  Content-Length: 36     [IP: 127.0.0.1 43485]
-Err:5 https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble InRelease
-  Invalid response from proxy: HTTP/1.1 403 Forbidden  Content-Length: 36     [IP: 127.0.0.1 43485]
-W: Failed to fetch https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu/dists/noble/InRelease  Invalid response from proxy: HTTP/1.1 403 Forbidden  Content-Length: 36     [IP: 127.0.0.1 43485]
-W: Failed to fetch https://ppa.launchpadcontent.net/ondrej/php/ubuntu/dists/noble/InRelease  Invalid response from proxy: HTTP/1.1 403 Forbidden  Content-Length: 36     [IP: 127.0.0.1 43485]
-W: Some index files failed to download. They have been ignored, or old ones used instead.
-```
-
-Essas PPAs não são necessárias para o tesseract; a instalação seguiu normalmente pelos repositórios oficiais.
-
-Comando: `apt-get install -y tesseract-ocr tesseract-ocr-por`
+Saída relevante (dois repositórios de terceiros, não usados pelo projeto, falharam; os repositórios oficiais do Ubuntu sincronizaram normalmente):
 
 ```
-The following additional packages will be installed:
-  liblept5 libtesseract5 libwebpmux3 tesseract-ocr-eng tesseract-ocr-osd
-The following NEW packages will be installed:
-  liblept5 libtesseract5 libwebpmux3 tesseract-ocr tesseract-ocr-eng
-  tesseract-ocr-osd tesseract-ocr-por
-0 upgraded, 7 newly installed, 0 to remove and 146 not upgraded.
-Need to get 9354 kB of archives.
+Hit:5 http://archive.ubuntu.com/ubuntu noble InRelease
+Get:6 http://archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:7 https://download.docker.com/linux/ubuntu noble/stable amd64 Packages [75.7 kB]
+Get:8 http://security.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1587 kB]
+Get:9 http://archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:10 http://security.ubuntu.com/ubuntu noble-security/main amd64 Packages [1110 kB]
+Get:11 http://security.ubuntu.com/ubuntu noble-security/multiverse amd64 Packages [50.0 kB]
+Get:12 http://security.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1522 kB]
+Get:13 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1433 kB]
+Get:14 http://archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1700 kB]
+Get:15 http://archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Packages [55.8 kB]
+Get:16 http://archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [2138 kB]
+Get:17 http://archive.ubuntu.com/ubuntu noble-backports/main amd64 Packages [48.9 kB]
+Get:18 http://archive.ubuntu.com/ubuntu noble-backports/universe amd64 Packages [35.9 kB]
+Get:19 http://archive.ubuntu.com/ubuntu noble-backports/multiverse amd64 Packages [671 B]
+Reading package lists...
+E: Failed to fetch https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu/dists/noble/InRelease  403  Forbidden [IP: 185.125.189.186 443]
+E: The repository 'https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu noble InRelease' is no longer signed.
+E: Failed to fetch https://ppa.launchpadcontent.net/ondrej/php/ubuntu/dists/noble/InRelease  403  Forbidden [IP: 185.125.189.186 443]
+E: The repository 'https://ppa.launchpadcontent.net/ondrej/php/ubuntu noble InRelease' is no longer signed.
+```
+
+Comando: `sudo apt-get install -y tesseract-ocr tesseract-ocr-por`
+
+Saída (resumida, sem as barras de progresso de "Reading database"):
+
+```
 After this operation, 23.9 MB of additional disk space will be used.
-...
+Get:1 http://archive.ubuntu.com/ubuntu noble/main amd64 libwebpmux3 amd64 1.3.2-0.4build3 [25.7 kB]
+Get:2 http://archive.ubuntu.com/ubuntu noble/universe amd64 liblept5 amd64 1.82.0-3build4 [1099 kB]
+Get:3 http://archive.ubuntu.com/ubuntu noble/universe amd64 libtesseract5 amd64 5.3.4-1build5 [1291 kB]
+Get:4 http://archive.ubuntu.com/ubuntu noble/universe amd64 tesseract-ocr-eng all 1:4.1.0-2 [1818 kB]
+Get:5 http://archive.ubuntu.com/ubuntu noble/universe amd64 tesseract-ocr-osd all 1:4.1.0-2 [3841 kB]
+Get:6 http://archive.ubuntu.com/ubuntu noble/universe amd64 tesseract-ocr amd64 5.3.4-1build5 [328 kB]
+Get:7 http://archive.ubuntu.com/ubuntu noble/universe amd64 tesseract-ocr-por all 1:4.1.0-2 [951 kB]
+Fetched 9354 kB in 2s (5093 kB/s)
 Setting up tesseract-ocr-por (1:4.1.0-2) ...
 Setting up tesseract-ocr-eng (1:4.1.0-2) ...
 Setting up tesseract-ocr-osd (1:4.1.0-2) ...
@@ -82,7 +95,7 @@ Setting up tesseract-ocr (5.3.4-1build5) ...
 Processing triggers for libc-bin (2.39-0ubuntu8.7) ...
 ```
 
-Instalação concluída sem erros, via `apt-get` normal (repositório oficial do Ubuntu), sem necessidade de baixar `por.traineddata` do GitHub.
+Instalação via apt funcionou de primeira. Não foi necessário baixar `por.traineddata` do GitHub manualmente.
 
 Comando: `tesseract --version`
 
@@ -111,46 +124,61 @@ osd
 por
 ```
 
-O idioma `por` ficou disponível. Não foi necessário recorrer ao download do `por.traineddata` do GitHub (tessdata_fast) — mas registre-se que esse caminho alternativo **também estaria bloqueado** neste ambiente: um teste de alcance a `github.com` (usado como proxy do domínio do tessdata_fast) devolveu `HTTP_CODE=403` pelo mesmo proxy de saída da sessão (ver seção 4). Ou seja, se o apt não tivesse funcionado, a alternativa sugerida na tarefa não teria funcionado aqui.
+O idioma `por` ficou disponível.
 
 ## 3. Qualidade do OCR
 
-`pip install pymupdf` (ver também seção 6) e geração de um PDF de teste com o texto:
+Instalação: `pip install pymupdf` (ver detalhes na seção 6).
 
-`DOTAÇÃO ORÇAMENTÁRIA - PORTARIA No 049/2025 - EXONERAÇÃO`
+Script Python usado para gerar o PDF de teste com acentuação em português:
 
-Script usado (`fitz`/pymupdf), renderizado a 300 dpi e passado por `tesseract -l por`.
+```python
+import pymupdf
 
-Primeira tentativa, com a página estreita demais (595pt de largura), o texto foi cortado e o OCR devolveu:
+doc = pymupdf.open()
+page = doc.new_page(width=842, height=200)  # página larga, para não cortar o texto
+text = "DOTAÇÃO ORÇAMENTÁRIA - PORTARIA No 049/2025 - EXONERAÇÃO"
+page.insert_text((50, 100), text, fontsize=18, fontname="helv")
+doc.save("test2.pdf")
 
+doc2 = pymupdf.open("test2.pdf")
+p = doc2[0]
+mat = pymupdf.Matrix(300/72, 300/72)  # 300 dpi
+pix = p.get_pixmap(matrix=mat)
+pix.save("test2.png")
 ```
-DOTAÇÃO ORÇAMENTÁRIA - PORTARIA No 049/2025 - EXONERA(
-```
 
-Corrigido o teste com página mais larga (900pt, PNG resultante 3750×834 px a 300 dpi), o resultado do `tesseract test_por2.png - -l por` foi:
+Nota: a primeira tentativa usou o tamanho de página padrão (A4, ~595pt de largura) e o texto foi cortado na borda da página antes mesmo de chegar ao tesseract ("...EXONER"). Isso era um artefato da geração do PDF de teste, não do OCR — corrigido usando uma página mais larga (842pt).
 
+Comando: `tesseract test2.png out2 -l por` e depois `cat out2.txt`
+
+Texto original:
 ```
 DOTAÇÃO ORÇAMENTÁRIA - PORTARIA No 049/2025 - EXONERAÇÃO
 ```
 
-**Os acentos voltaram corretos** (Ç, Ã, Á) quando o texto não é cortado pela borda da página. Isso confirma que o pacote `por` do tesseract reconhece corretamente a acentuação do português, e que o cuidado a tomar na coleta real é garantir que o corte/paginação de cada página do diário não corte texto na borda da imagem.
+Texto devolvido pelo tesseract:
+```
+DOTAÇÃO ORÇAMENTÁRIA - PORTARIA No 049/2025 - EXONERAÇÃO
+```
+
+Os dois textos são idênticos, caractere por caractere. Todos os acentos (Ç, Ã, Á) voltaram corretos.
 
 ## 4. Rede até o portal da prefeitura
 
 Comando:
-
 ```
 curl -s -o /dev/null -w '%{http_code}' -X POST https://transparencia.mesquita.rj.gov.br/diario_oficial_get.php -d 'mesano=8/2026'
 ```
 
-Resultado: `HTTP_CODE=000`, `TIME=0.317519s` (curl exit code 56 — falha de leitura, conexão não estabelecida).
+Resultado: `000` (curl exit code 56 — falha de recebimento, sem código HTTP real).
 
-Diagnóstico com `curl -v`:
+Diagnóstico com `curl -v` no mesmo endereço:
 
 ```
-* Uses proxy env variable https_proxy == 'http://127.0.0.1:43485'
-*   Trying 127.0.0.1:43485...
-* Connected to 127.0.0.1 (127.0.0.1) port 43485
+* Uses proxy env variable https_proxy == 'http://127.0.0.1:41709'
+*   Trying 127.0.0.1:41709...
+* Connected to 127.0.0.1 (127.0.0.1) port 41709
 * CONNECT tunnel: HTTP/1.1 negotiated
 * allocate connect buffer
 * Establish HTTP proxy tunnel to transparencia.mesquita.rj.gov.br:443
@@ -163,35 +191,45 @@ Diagnóstico com `curl -v`:
 < Content-Length: 36
 < 
 * CONNECT tunnel failed, response 403
-curl: (56) CONNECT tunnel failed, response 403
+* Closing connection
 ```
 
-Comando (download do PDF de teste):
+Confirmado pelo status do proxy do ambiente (`curl -sS "$HTTPS_PROXY/__agentproxy/status"`):
+
+```json
+"recentRelayFailures": [
+  {
+    "ts": "2026-08-04T00:17:44.643Z",
+    "kind": "connect_rejected",
+    "detail": "gateway answered 403 to CONNECT (policy denial or upstream failure)",
+    "host": "transparencia.mesquita.rj.gov.br:443"
+  },
+  {
+    "ts": "2026-08-04T00:17:44.997Z",
+    "kind": "connect_rejected",
+    "detail": "gateway answered 403 to CONNECT (policy denial or upstream failure)",
+    "host": "transparencia.mesquita.rj.gov.br:443"
+  },
+  {
+    "ts": "2026-08-04T00:17:49.398Z",
+    "kind": "connect_rejected",
+    "detail": "gateway answered 403 to CONNECT (policy denial or upstream failure)",
+    "host": "transparencia.mesquita.rj.gov.br:443"
+  }
+]
+```
+
+Todo o tráfego HTTPS de saída desta sessão passa por um proxy de política ("agent proxy") que reterminaliza o TLS. Segundo o README desse proxy (`/root/.ccr/README.md`), um 403/407 no CONNECT indica que o host de destino **não está liberado pela política de saída da organização para esta sessão**, e instrui explicitamente a não tentar contornar isso ("Do not retry or route around it — report the blocked host.").
+
+Consequência: o segundo teste (download do PDF de exemplo, `diario_oficial_get_anexo.php?codigo=14326`) também falhou pelo mesmo motivo, sem sequer completar o handshake:
 
 ```
 curl -s -o /tmp/t.pdf -w '%{http_code} %{size_download} %{speed_download}' -L 'https://transparencia.mesquita.rj.gov.br/diario_oficial_get_anexo.php?codigo=14326'
 ```
 
-Resultado: `HTTP_CODE=000 SIZE=0 SPEED=0` (exit code 56, mesmo bloqueio de proxy). Nenhum byte foi baixado.
+Resultado: `000 0 0` — nenhum byte baixado, nenhum código HTTP recebido do servidor real (a rejeição aconteceu no proxy, antes de chegar ao portal). Não foi possível medir tamanho nem velocidade de download porque a conexão nunca chegou a se estabelecer com o servidor de destino.
 
-Diagnóstico consultado em `$HTTPS_PROXY/__agentproxy/status` (`recentRelayFailures`):
-
-```
-2026-08-04T03:01:51.948Z transparencia.mesquita.rj.gov.br:443 gateway answered 403 to CONNECT (policy denial or upstream failure)
-2026-08-04T03:01:55.337Z transparencia.mesquita.rj.gov.br:443 gateway answered 403 to CONNECT (policy denial or upstream failure)
-2026-08-04T03:02:07.466Z transparencia.mesquita.rj.gov.br:443 gateway answered 403 to CONNECT (policy denial or upstream failure)
-```
-
-Ou seja: **não é uma falha de rede transitória, é uma negação de política do proxy de saída do ambiente** ("policy denial"). O domínio `transparencia.mesquita.rj.gov.br` não está na lista liberada para este ambiente.
-
-Como referência adicional, testei também `github.com` (para avaliar a alternativa de baixar `por.traineddata` — item 2) e obtive o mesmo padrão de bloqueio:
-
-```
-curl -s -o /dev/null -w 'HTTP_CODE=%{http_code}\n' -L 'https://github.com/tesseract-ocr/tessdata_fast/raw/main/por.traineddata'
-HTTP_CODE=403
-```
-
-Os domínios que funcionaram neste ambiente (confirmados por uso bem-sucedido nesta mesma sessão): `archive.ubuntu.com`, `security.ubuntu.com`, `download.docker.com`, `pypi.org`/`files.pythonhosted.org` (via `pip install`). Esses estão consistentes com a lista de `noProxy`/liberados reportada por `$HTTPS_PROXY/__agentproxy/status`.
+**Não é uma falha do portal da prefeitura** — é uma política de rede deste ambiente de nuvem que bloqueia esse host especificamente. Não houve nova tentativa após a negação de política, conforme instruído pelo próprio proxy.
 
 ## 5. Espaço em disco e memória
 
@@ -202,17 +240,15 @@ Filesystem      Size  Used Avail Use% Mounted on
 /dev/vda        252G  7.2G   30G  20% /
 ```
 
-30 GB disponíveis — muito acima do necessário para o acervo aberto (245 MB) ou o pacote comprimido (83 MB), e para os PDFs de ~1 MB por edição baixados durante a coleta.
-
 Comando: `free -m`
 
 ```
                total        used        free      shared  buff/cache   available
-Mem:           16075         608       14547           4        1180       15467
+Mem:           16075         601       14560           4        1175       15474
 Swap:              0           0           0
 ```
 
-16 GB de RAM, 15,4 GB disponíveis. Memória não é fator limitante.
+30 GB disponíveis é muito mais que suficiente para o acervo aberto (245 MB), o pacote comprimido (83 MB) e os PDFs baixados durante a coleta (~1 MB por edição). Memória disponível (15,4 GB) também não é fator limitante.
 
 ## 6. PyMuPDF
 
@@ -222,18 +258,26 @@ Comando: `pip install pymupdf`
 Collecting pymupdf
   Downloading pymupdf-1.28.0-cp310-abi3-manylinux_2_28_x86_64.whl.metadata (26 kB)
 Downloading pymupdf-1.28.0-cp310-abi3-manylinux_2_28_x86_64.whl (25.7 MB)
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 25.7/25.7 MB 25.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 25.7/25.7 MB 19.5 MB/s eta 0:00:00
 Installing collected packages: pymupdf
 Successfully installed pymupdf-1.28.0
 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
 ```
 
-Funcionou sem problemas. Versão instalada: **pymupdf 1.28.0**. Foi usado com sucesso para gerar e renderizar o PDF de teste da seção 3 (via `fitz`).
+Comando: `python3 -c "import pymupdf; print(pymupdf.__version__)"`
+
+```
+PyMuPDF 1.28.0: Python bindings for the MuPDF 1.29.0 library.
+Python 3.11 running on linux (64-bit).
+pymupdf version: 1.28.0
+```
+
+Instalação funcionou sem erros (fora o aviso de rotina sobre rodar pip como root). Baixado do PyPI (`pypi.org`/`files.pythonhosted.org`), que está na lista de hosts liberados pela política de rede — diferente do portal da prefeitura.
 
 ## Veredito
 
-**(a) Dá para instalar o Tesseract com português?** Sim — `apt-get install tesseract-ocr tesseract-ocr-por` funciona neste ambiente sem sudo especial (já é root), o idioma `por` fica disponível, e o OCR devolve acentuação portuguesa correta (testado com "DOTAÇÃO ORÇAMENTÁRIA... EXONERAÇÃO").
+(a) **Dá para instalar o Tesseract com português?** Sim — `apt-get install tesseract-ocr tesseract-ocr-por` funciona sem obstáculos, o idioma `por` fica disponível, e o teste de OCR com acentuação (Ç, Ã, Á) devolveu o texto perfeitamente correto.
 
-**(b) Dá para alcançar o portal?** Não — todo acesso a `transparencia.mesquita.rj.gov.br` é bloqueado pelo proxy de saída do ambiente com HTTP 403 ("policy denial"), tanto para a consulta de mês/ano quanto para o download de anexo em PDF; a alternativa de baixar `por.traineddata` do GitHub também é bloqueada pelo mesmo motivo.
+(b) **Dá para alcançar o portal da prefeitura?** Não — a política de rede de saída deste ambiente de nuvem bloqueia `transparencia.mesquita.rj.gov.br` (o proxy responde 403 Forbidden ao CONNECT), então nenhuma requisição HTTPS a esse host se completa, seja POST na busca de diário, seja GET de anexo em PDF.
 
-**(c) Dá para rodar a coleta inteira aqui?** Não, neste ambiente específico — falta exclusivamente o alcance de rede ao portal da Prefeitura de Mesquita (item b); disco, memória, Tesseract/português e PyMuPDF estão todos prontos e funcionando. A coleta rodaria de ponta a ponta assim que o domínio `transparencia.mesquita.rj.gov.br` fosse liberado na política de saída do ambiente.
+(c) **Dá para rodar a coleta inteira aqui?** Não, não nesta sessão/ambiente tal como configurado hoje: disco, memória, Tesseract, idioma português e PyMuPDF estão todos prontos, mas a coleta depende de baixar os PDFs do Diário Oficial diretamente do portal da prefeitura, e esse acesso está bloqueado pela política de rede do ambiente — seria necessário que um administrador liberasse `transparencia.mesquita.rj.gov.br` na política de egress para esta coleta rodar aqui.
