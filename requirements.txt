@@ -1,5 +1,9 @@
 # O servidor só lê o SQLite pronto — não processa PDF, não faz OCR.
 # A construção do acervo (baixar, extrair, OCR) mora em ~/Mesquita_Diarios_Oficiais
 # e tem as suas próprias dependências, num venv separado.
-mcp>=1.28
+# `mcp` pinado abaixo de 2, como em requirements-servidor.txt: a 2.x removeu
+# `mcp.server.fastmcp`, que é o que `diarios/servidor.py` importa. Sem o teto,
+# um venv novo instala a 2.0 e o servidor não sobe nem localmente — enquanto a
+# imagem, que lê do outro arquivo, continua de pé. Os dois pins andam juntos.
+mcp>=1.28,<2
 pytest>=8.0
