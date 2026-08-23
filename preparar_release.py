@@ -12,14 +12,34 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import os
 import shutil
 import sqlite3
 import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent
-# O acervo é construído fora do repositório, pelos scripts de coleta.
-BANCO = Path.home() / "Mesquita_Diarios_Oficiais" / "acervo.db"
+
+
+def _achar_banco() -> Path:
+    """Localiza o acervo, que vive fora do repositório e mudou de disco.
+
+    Em 23/08/2026 os 4 GB foram para o HD externo. A busca é por candidatos,
+    em ordem, para que o erro seja legível quando o HD estiver desconectado —
+    e não um "arquivo não encontrado" apontando um caminho que já não é o certo.
+    """
+    do_ambiente = os.environ.get("DIARIOS_BANCO")
+    candidatos = ([Path(do_ambiente)] if do_ambiente else []) + [
+        Path("D:/Mesquita_Diarios_Oficiais/acervo.db"),
+        Path.home() / "Mesquita_Diarios_Oficiais" / "acervo.db",
+    ]
+    for caminho in candidatos:
+        if caminho.exists():
+            return caminho
+    return candidatos[0]
+
+
+BANCO = _achar_banco()
 BLOCO = 4 * 1024 * 1024
 
 
@@ -54,8 +74,9 @@ def _numeros(banco: Path) -> str:
 
 def preparar(versao: str, repositorio: str = "fm85gn2y4q-maker/diarios-mesquita") -> int:
     if not BANCO.exists():
-        print(f"Acervo não encontrado em {BANCO}. Rode a coleta antes.",
-              file=sys.stderr)
+        print(f"Acervo não encontrado em {BANCO}. "
+              "Se ele está no HD externo, confira se o disco D: está conectado; "
+              "senão, aponte DIARIOS_BANCO para o arquivo.", file=sys.stderr)
         return 1
 
     # Rodar com o servidor no ar deixaria o -wal por fora e o acervo publicado

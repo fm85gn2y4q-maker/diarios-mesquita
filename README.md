@@ -80,12 +80,15 @@ python -m diarios                 # stdio, para o Claude Desktop
 python -m diarios --http          # HTTP em 127.0.0.1:8766, para o ChatGPT
 ```
 
-O banco é procurado em `~/Mesquita_Diarios_Oficiais/acervo.db`, ou onde
-`DIARIOS_BANCO` apontar.
+O banco fica em `D:\Mesquita_Diarios_Oficiaiscervo.db` — no HD externo desde
+23/08/2026, porque são 4 GB. O servidor procura nessa ordem: `DIARIOS_BANCO`,
+depois o HD externo, depois a pasta antiga em `~`. Com o disco desconectado, a
+mensagem de erro nomeia os três caminhos, em vez de acusar um arquivo sumido.
 
 ## Como o acervo é construído
 
-Fora deste repositório, em `~/Mesquita_Diarios_Oficiais`, por quatro scripts que
+Fora deste repositório, em `D:\Mesquita_Diarios_Oficiais` (HD externo), por
+quatro scripts que
 se executam nesta ordem e são todos incrementais — reexecutar só processa o que
 chegou depois:
 
@@ -103,4 +106,6 @@ O OCR mora num venv separado de propósito: ele arrasta dependências pesadas qu
 não têm por que conviver com o resto do ambiente.
 
 O acervo fica fora do Git, como asset de release com conferência de sha256 —
-são 3,4 GB de PDF.
+são 3,5 GB de PDF, num HD externo. **A coleta semanal depende de o disco estar
+conectado**: sem ele, a tarefa agendada falha e o sinal de vida envelhece, que
+é como o monitor percebe.

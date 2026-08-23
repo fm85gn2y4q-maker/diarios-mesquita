@@ -170,10 +170,21 @@ cobertura se o período pedido existe na base.
 
 
 def _caminho_padrao() -> Path:
+    """DIARIOS_BANCO manda; sem ele, procura onde o acervo costuma estar.
+
+    O acervo mudou para o HD externo em 23/08/2026, e o caminho antigo fica na
+    lista de propósito: um servidor apontado para o lugar velho falharia com
+    "arquivo não encontrado" sem dizer que o disco simplesmente não está ligado.
+    """
     do_ambiente = os.environ.get("DIARIOS_BANCO")
-    if do_ambiente:
-        return Path(do_ambiente)
-    return Path.home() / "Mesquita_Diarios_Oficiais" / "acervo.db"
+    candidatos = ([Path(do_ambiente)] if do_ambiente else []) + [
+        Path("D:/Mesquita_Diarios_Oficiais/acervo.db"),
+        Path.home() / "Mesquita_Diarios_Oficiais" / "acervo.db",
+    ]
+    for caminho in candidatos:
+        if caminho.exists():
+            return caminho
+    return candidatos[0]
 
 
 def construir(
