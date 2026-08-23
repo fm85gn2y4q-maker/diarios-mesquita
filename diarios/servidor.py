@@ -178,8 +178,13 @@ def _caminho_padrao() -> Path:
     """
     do_ambiente = os.environ.get("DIARIOS_BANCO")
     candidatos = ([Path(do_ambiente)] if do_ambiente else []) + [
-        Path("D:/Mesquita_Diarios_Oficiais/acervo.db"),
+        # O disco rápido vem primeiro, e a ordem não é estética: servir este
+        # SQLite de HD USB leva de 16 a 30 s por busca contra 0,01 s no NVMe —
+        # o FTS5 faz leitura aleatória, e disco que gira paga ~10 ms por salto.
+        # Medido em 23/08/2026. Para o HD externo vai só a matéria-prima (os
+        # PDFs), alcançada por junção; o banco que responde fica aqui.
         Path.home() / "Mesquita_Diarios_Oficiais" / "acervo.db",
+        Path("D:/Mesquita_Diarios_Oficiais/acervo.db"),
     ]
     for caminho in candidatos:
         if caminho.exists():
