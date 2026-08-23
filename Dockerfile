@@ -27,8 +27,8 @@ COPY diarios/ ./diarios/
 # Publicar acervo novo é rodar `python preparar_release.py <versão>`, anexar o
 # .gz à release e trocar estas duas linhas.
 # Acervo v1.1.0, de 03/08/2026: 2.659 edições, 27.931 páginas, 17.765 atos.
-ARG ACERVO=https://github.com/fm85gn2y4q-maker/diarios-mesquita/releases/download/v2026.08.19/diarios-mesquita-v2026.08.19.db.gz
-ARG ACERVO_SHA256=71211f0b3a33f1506640da98cd936d7d1eaac4c73fc3cb0f8c959f0a8215f4a7
+ARG ACERVO=https://github.com/fm85gn2y4q-maker/diarios-mesquita/releases/download/v2026.08.20/diarios-mesquita-v2026.08.20.db.gz
+ARG ACERVO_SHA256=dea9247a9e2adddc1ddef0eb63d33d83e749290fde218b287d40043984b37f39
 COPY instalar_acervo.py ./
 RUN python instalar_acervo.py "$ACERVO" dados/diarios.sqlite "$ACERVO_SHA256"
 
