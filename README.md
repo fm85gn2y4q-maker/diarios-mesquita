@@ -88,9 +88,8 @@ mensagem de erro nomeia os três caminhos, em vez de acusar um arquivo sumido.
 ## Como o acervo é construído
 
 Fora deste repositório, em `D:\Mesquita_Diarios_Oficiais` (HD externo), por
-quatro scripts que
-se executam nesta ordem e são todos incrementais — reexecutar só processa o que
-chegou depois:
+quatro scripts que se executam nesta ordem e são todos incrementais —
+reexecutar só processa o que chegou depois:
 
 ```bash
 python atualizar.py                # os quatro passos, na ordem certa
