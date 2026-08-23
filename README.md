@@ -80,14 +80,28 @@ python -m diarios                 # stdio, para o Claude Desktop
 python -m diarios --http          # HTTP em 127.0.0.1:8766, para o ChatGPT
 ```
 
-O banco fica em `D:\Mesquita_Diarios_Oficiais\acervo.db` — no HD externo desde
-23/08/2026, porque são 4 GB. O servidor procura nessa ordem: `DIARIOS_BANCO`,
-depois o HD externo, depois a pasta antiga em `~`. Com o disco desconectado, a
-mensagem de erro nomeia os três caminhos, em vez de acusar um arquivo sumido.
+Onde cada coisa mora, e por quê:
+
+| o quê | onde | motivo |
+|---|---|---|
+| `acervo.db` (246 MB) | `C:\Users\...\Mesquita_Diarios_Oficiais\` | é o que responde às buscas |
+| PDFs (3,5 GB) | `D:\Mesquita_Diarios_Oficiais\municipio\` (HD USB) | matéria-prima, lida só na coleta |
+
+A pasta `municipio` em C: é uma **junção** para o HD externo, então todo caminho
+em script e índice continua valendo sem alteração.
+
+A divisão foi medida, não estimada: servir este SQLite do HD USB leva **16 a
+30 s por busca**, contra **0,01 a 0,02 s** no NVMe. Não é o tamanho do banco —
+é o FTS5 fazendo leitura aleatória pelo índice, e disco que gira paga ~10 ms por
+salto. O sintoma não aparece em teste nenhum: `pytest` passa, a coleta roda, e
+só a pesquisa fica inutilizável.
+
+O servidor procura o banco nesta ordem: `DIARIOS_BANCO`, depois o disco rápido,
+depois o HD externo. Com o HD desconectado, a coleta falha — a busca, não.
 
 ## Como o acervo é construído
 
-Fora deste repositório, em `D:\Mesquita_Diarios_Oficiais` (HD externo), por
+Fora deste repositório, em `C:\Users\...\Mesquita_Diarios_Oficiais`, por
 quatro scripts que se executam nesta ordem e são todos incrementais —
 reexecutar só processa o que chegou depois:
 
@@ -105,6 +119,6 @@ O OCR mora num venv separado de propósito: ele arrasta dependências pesadas qu
 não têm por que conviver com o resto do ambiente.
 
 O acervo fica fora do Git, como asset de release com conferência de sha256 —
-são 3,5 GB de PDF, num HD externo. **A coleta semanal depende de o disco estar
-conectado**: sem ele, a tarefa agendada falha e o sinal de vida envelhece, que
-é como o monitor percebe.
+**A coleta semanal depende de o HD externo estar conectado**: sem ele a tarefa
+falha e o sinal de vida envelhece, que é como o monitor percebe. A busca não
+depende do HD — o banco está no disco rápido.
