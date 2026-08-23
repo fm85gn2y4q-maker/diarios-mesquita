@@ -25,7 +25,7 @@ construção conferindo o sha256. O resto do caminho é o mesmo.
 python preparar_release.py 1.0.0
 ```
 
-Ele comprime `D:\Mesquita_Diarios_Oficiaiscervo.db` (HD externo), calcula o sha256 e
+Ele comprime `D:\Mesquita_Diarios_Oficiais\acervo.db` (HD externo), calcula o sha256 e
 imprime as duas linhas do `Dockerfile` e o comando `gh` da release.
 
 **Feche o que estiver escrevendo no banco antes** — servidor MCP, script de
@@ -103,7 +103,7 @@ DIARIOS_SEGREDO_OAUTH não definido: usando um segredo temporário.
 - **Claude** (web/desktop): adicionar conector com a mesma URL. Sem OAuth
   também funciona.
 - **Claude Desktop local**: já está configurado apontando para o `.venv` e o
-  banco em `D:\Mesquita_Diarios_Oficiaiscervo.db`. Não depende do Render.
+  banco em `D:\Mesquita_Diarios_Oficiais\acervo.db`. Não depende do Render.
 
 ## 7. Conferir que subiu o acervo certo
 

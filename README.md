@@ -80,7 +80,7 @@ python -m diarios                 # stdio, para o Claude Desktop
 python -m diarios --http          # HTTP em 127.0.0.1:8766, para o ChatGPT
 ```
 
-O banco fica em `D:\Mesquita_Diarios_Oficiaiscervo.db` — no HD externo desde
+O banco fica em `D:\Mesquita_Diarios_Oficiais\acervo.db` — no HD externo desde
 23/08/2026, porque são 4 GB. O servidor procura nessa ordem: `DIARIOS_BANCO`,
 depois o HD externo, depois a pasta antiga em `~`. Com o disco desconectado, a
 mensagem de erro nomeia os três caminhos, em vez de acusar um arquivo sumido.
