@@ -6,12 +6,23 @@ __pycache__/
 .pytest_cache/
 *.log
 
-# O acervo é artefato de dados: 257 MB, 84 MB comprimido, gerado por programa.
+# O acervo é artefato de dados: 246 MB, gerado por programa.
 # Vai como asset de release, não no histórico do Git.
 dados/
 *.db
+*.db-wal
+*.db-shm
 *.db.gz
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
 *.mcpb
+
+# `coleta/` é a pasta de trabalho da coleta — a junção
+# `~/Mesquita_Diarios_Oficiais` aponta para ela, e é lá que os scripts rodam.
+# Versionamos os scripts; tudo o que eles PRODUZEM ou consomem fica de fora:
+coleta/.venv-ocr/
+coleta/municipio/
+coleta/tessdata/
+coleta/indice.csv
+coleta/catalogo.json

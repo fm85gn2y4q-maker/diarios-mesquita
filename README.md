@@ -82,22 +82,26 @@ python -m diarios --http          # HTTP em 127.0.0.1:8766, para o ChatGPT
 
 Onde cada coisa mora, e por quê:
 
-| o quê | onde | motivo |
-|---|---|---|
-| `acervo.db` (246 MB) | `C:\Users\...\Mesquita_Diarios_Oficiais\` | é o que responde às buscas |
-| PDFs (3,5 GB) | `D:\Mesquita_Diarios_Oficiais\municipio\` (HD USB) | matéria-prima, lida só na coleta |
+| o quê | onde |
+|---|---|
+| scripts da coleta | `coleta/` — versionados aqui |
+| `acervo.db` (246 MB) | `coleta/acervo.db`, fora do Git |
+| PDFs (3,4 GB) | `coleta/municipio`, junção para onde o acervo bruto estiver |
 
-A pasta `municipio` em C: é uma **junção** para o HD externo, então todo caminho
-em script e índice continua valendo sem alteração.
+`C:\Users\...\Mesquita_Diarios_Oficiais` é uma **junção para `coleta/`**. Todo
+caminho antigo — a tarefa do Agendador, os scripts, o `indice.csv` — continua
+valendo, e os scripts deixaram de existir em duas cópias que podiam divergir.
 
-A divisão foi medida, não estimada: servir este SQLite do HD USB leva **16 a
-30 s por busca**, contra **0,01 a 0,02 s** no NVMe. Não é o tamanho do banco —
-é o FTS5 fazendo leitura aleatória pelo índice, e disco que gira paga ~10 ms por
-salto. O sintoma não aparece em teste nenhum: `pytest` passa, a coleta roda, e
+**O banco fica em disco rápido, sempre.** Servir este SQLite de HD USB leva
+**16 a 30 s por busca** contra **0,01 a 0,02 s** no NVMe: o FTS5 lê o índice em
+saltos aleatórios, e disco que gira paga ~10 ms por salto. Só a matéria-prima
+(os PDFs) pode morar em disco lento, porque é lida sequencialmente e só na
+coleta. O sintoma não aparece em teste nenhum: `pytest` passa, a coleta roda, e
 só a pesquisa fica inutilizável.
 
-O servidor procura o banco nesta ordem: `DIARIOS_BANCO`, depois o disco rápido,
-depois o HD externo. Com o HD desconectado, a coleta falha — a busca, não.
+O servidor procura o banco nesta ordem: `DIARIOS_BANCO`, depois o caminho
+padrão. Mudou o lugar dos PDFs, refaça a junção `coleta/municipio` — nada mais
+precisa mudar.
 
 ## Como o acervo é construído
 
