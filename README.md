@@ -126,3 +126,10 @@ O acervo fica fora do Git, como asset de release com conferência de sha256 —
 **A coleta semanal depende de o HD externo estar conectado**: sem ele a tarefa
 falha e o sinal de vida envelhece, que é como o monitor percebe. A busca não
 depende do HD — o banco está no disco rápido.
+
+Desconectado, a junção `coleta/municipio` fica pendurada, e o Windows relata
+isso de um jeito que engana: `exists()` responde False, mas `mkdir` levanta
+`FileExistsError [WinError 183]` — "não é possível criar um arquivo já
+existente". Em 26/09/2026 essa mensagem passou por defeito de código. Desde
+então `baixar_diarios.py` confere os destinos antes de catalogar e diz qual
+junção não resolve e para onde ela aponta.

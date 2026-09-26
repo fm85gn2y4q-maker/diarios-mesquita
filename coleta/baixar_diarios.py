@@ -25,6 +25,7 @@ import collections
 import csv
 import hashlib
 import json
+import os
 import sys
 import time
 import urllib.error
@@ -196,6 +197,29 @@ def baixar(registro: dict) -> tuple[dict, str, str]:
     return registro, "OK", str(len(conteudo))
 
 
+def conferir_destinos(fontes: list[str]) -> str | None:
+    """A pasta de cada caderno é, nesta máquina, uma junção para o disco em que
+    o acervo bruto mora. Junção cujo alvo desapareceu — HD externo desconectado
+    — é entrada de diretório que não resolve: `exists()` responde False e o
+    `mkdir(exist_ok=True)` de `baixar()` levanta FileExistsError [WinError 183],
+    "não é possível criar um arquivo já existente". A mensagem parece defeito de
+    código e esconde a causa: foi o que aconteceu em 26/09/2026, depois de 90 s
+    de catalogação gastos para nada. Conferir antes custa milissegundos.
+    """
+    for fonte in fontes:
+        caminho = BASE / fonte
+        if not os.path.lexists(caminho) or caminho.is_dir():
+            continue  # ausente (o mkdir a cria) ou alcançável
+        try:
+            destino_da_juncao = os.readlink(caminho)
+        except OSError:
+            return f"{caminho} existe e não é uma pasta utilizável."
+        return (f"{caminho} é junção para {destino_da_juncao}, que não responde. "
+                "Conecte o HD externo; se o acervo mudou de lugar, refaça a "
+                "junção com mklink /J.")
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Baixa os Diários Oficiais de Mesquita-RJ")
     ap.add_argument("--fonte", choices=[*FONTES, "todas"], default="todas")
@@ -205,6 +229,11 @@ def main() -> int:
     args = ap.parse_args()
 
     fontes = list(FONTES) if args.fonte == "todas" else [args.fonte]
+
+    problema = conferir_destinos(fontes)
+    if problema:
+        print(f"ERRO: {problema}")
+        return 2
 
     print(f"Catalogando {args.ano_inicial}-{args.ano_final} em {len(fontes)} caderno(s)...")
     catalogo = montar_catalogo(fontes, args.ano_inicial, args.ano_final)
