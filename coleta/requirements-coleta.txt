@@ -1,0 +1,15 @@
+# Dependências da construção do acervo (baixar, extrair, OCR, segmentar).
+#
+# Este arquivo faltava, e a falta custou uma coleta: as dependências viviam
+# instaladas à mão no Python da Microsoft Store, sem registro de quais eram.
+# Quando o atalho desse Python desapareceu, em 27/09/2026, não havia como saber
+# o que reinstalar — só o traceback dizia, um módulo por execução.
+#
+# É uma só. `baixar_diarios.py` e `segmentar_atos.py` usam apenas a biblioteca
+# padrão; o OCR chama o tesseract.exe por subprocess, não por pacote.
+#
+# O venv se constrói com o Python de AppData/Local/Programs/Python — nunca com o
+# da Store, cujo caminho muda a cada atualização e desfaz o venv em silêncio:
+#     python -m venv .venv
+#     .venv/Scripts/python -m pip install -r requirements-coleta.txt
+pymupdf>=1.28,<2

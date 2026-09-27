@@ -36,7 +36,8 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz  # `import fitz` ainda responde na 1.28, mas avisa
+                       # que vai sair; o nome do pacote e o que fica.
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")

@@ -53,11 +53,23 @@ RAMO_SINAL = "sinal-de-vida"
 ARQUIVO_SINAL = "sinal_de_vida.json"
 ENSAIO = False   # em ensaio não se grava sinal, para não falsear o monitor
 
+# O pipeline roda no venv do projeto, e NÃO no interpretador que por acaso
+# executou este script. `sys.executable` parecia razoável e não era: em
+# 27/09/2026 o atalho do Python da Store desapareceu, o `python` do PATH passou
+# a ser outra instalação — sem pymupdf — e a extração morreu com
+# `ModuleNotFoundError: fitz` sobre um acervo que estava íntegro.
+#
+# O venv também deixou de ser dois. O segundo existia para isolar as
+# dependências pesadas do RapidOCR; o RapidOCR saiu do projeto quando o
+# Tesseract entrou, e o Tesseract é chamado por subprocess, não importado.
+# Sobrou uma única dependência de terceiros em todo o pipeline — pymupdf — e
+# dois venvs para mantê-la significam duas coisas para quebrar.
+PYTHON = BASE / ".venv" / "Scripts" / "python.exe"
 PASSOS = [
-    ("coleta", [sys.executable, "baixar_diarios.py", "--fonte", "municipio"]),
-    ("extração", [sys.executable, "extrair_texto.py"]),
-    ("OCR", [str(BASE / ".venv-ocr" / "Scripts" / "python.exe"), "ocr_paginas.py"]),
-    ("segmentação", [sys.executable, "segmentar_atos.py"]),
+    ("coleta", [str(PYTHON), "baixar_diarios.py", "--fonte", "municipio"]),
+    ("extração", [str(PYTHON), "extrair_texto.py"]),
+    ("OCR", [str(PYTHON), "ocr_paginas.py"]),
+    ("segmentação", [str(PYTHON), "segmentar_atos.py"]),
 ]
 
 
@@ -190,6 +202,17 @@ def main() -> int:
                  + " / ".join(sujo.strip().splitlines()[:3]))
         anotar("ABORTADO: " + aviso)
         gravar_sinal("abortado: árvore de trabalho suja", aviso, antes)
+        return 1
+
+    # Venv sobre o Python da Store se desfaz sozinho quando a Store atualiza o
+    # pacote (aconteceu aqui e no acervo-tcu). O sintoma é "No Python at ...",
+    # que não menciona venv nenhum: conferir antes e dizer o nome certo.
+    if not PYTHON.exists():
+        aviso = (f"o interpretador do pipeline não existe: {PYTHON}. Reconstrua o "
+                 "venv com o Python de AppData/Local/Programs/Python e instale "
+                 "requirements-coleta.txt.")
+        anotar("ABORTADO: " + aviso)
+        gravar_sinal("abortado: venv do pipeline ausente", aviso, antes)
         return 1
 
     for nome, comando in PASSOS:
