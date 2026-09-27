@@ -1,7 +1,7 @@
 {
- "quando": "2026-09-27T20:45:13-03:00",
- "resultado": "abortado: árvore de trabalho suja",
- "detalhe": "há alterações não commitadas no repositório do servidor: D coleta/atualizacao_semanal.cmd",
+ "quando": "2026-09-27T20:48:58-03:00",
+ "resultado": "falhou na extração",
+ "detalhe": "  File \"C:\\Users\\Matheus Menegatti\\projetos\\diarios-mesquita\\coleta\\extrair_texto.py\", line 31, in <module> /     import fitz / ModuleNotFoundError: No module named 'fitz'",
  "edicoes": 2692,
  "ultima": "2026-09-18",
  "paginas": 28172,
