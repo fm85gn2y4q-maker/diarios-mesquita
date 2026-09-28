@@ -1,10 +1,10 @@
 {
- "quando": "2026-09-27T20:48:58-03:00",
- "resultado": "falhou na extração",
- "detalhe": "  File \"C:\\Users\\Matheus Menegatti\\projetos\\diarios-mesquita\\coleta\\extrair_texto.py\", line 31, in <module> /     import fitz / ModuleNotFoundError: No module named 'fitz'",
- "edicoes": 2692,
- "ultima": "2026-09-18",
- "paginas": 28172,
- "atos": 17960,
+ "quando": "2026-09-27T21:00:14-03:00",
+ "resultado": "publicado",
+ "detalhe": "release v2026.09.24, 4 edição(ões) nova(s)",
+ "edicoes": 2696,
+ "ultima": "2026-09-24",
+ "paginas": 28191,
+ "atos": 17977,
  "ocr": 4113
 }
