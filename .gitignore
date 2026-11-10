@@ -1,4 +1,6 @@
 .venv/
+# e os venvs aposentados pela receita do Python da Store (mv .venv .venv_quebrado)
+.venv_quebrado/
 build/
 dist/
 __pycache__/
