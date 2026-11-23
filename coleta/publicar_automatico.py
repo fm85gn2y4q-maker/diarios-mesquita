@@ -46,6 +46,29 @@ REGISTRO = BASE / "publicacao.log"
 REPOSITORIO = "fm85gn2y4q-maker/diarios-mesquita"
 BLOCO = 4 * 1024 * 1024
 
+
+def versao_publicada() -> str | None:
+    """A data da edição mais recente do acervo que o servidor está servindo.
+
+    Lida do `ARG ACERVO` do Dockerfile, que é a única afirmação de qual pacote
+    o Render constrói. Devolve no formato do campo `ultima` do banco
+    (AAAA-MM-DD), para comparar os dois direto.
+
+    Devolve None quando não consegue ler — e None é tratado como "atrasado",
+    de propósito: na dúvida, publicar de novo custa um deploy; não publicar
+    deixa o servidor respondendo com acervo velho sem ninguém saber.
+    """
+    import re
+
+    docker = SERVIDOR / "Dockerfile"
+    try:
+        texto = docker.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    m = re.search(r"^ARG ACERVO=.*?v(\d{4})\.(\d{2})\.(\d{2})",
+                  texto, flags=re.M)
+    return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else None
+
 # O sinal de vida vai para uma branch só dele, NÃO para o master. O Render
 # observa o master e reconstrói a cada push: mandar o sinal para lá faria o
 # serviço rebaixar 86 MB toda semana, sem nada ter mudado no acervo.
@@ -232,10 +255,21 @@ def main() -> int:
            f"{depois['atos']} atos  (+{novas} edições, "
            f"+{depois['atos'] - antes['atos']} atos)")
 
-    if not novas and not args.forcar:
-        anotar("nada novo no portal — nada a publicar. Encerrado.")
+    # A régua não pode ser "o que mudou NESTA passada": o que importa é se o
+    # acervo local passou o que está PUBLICADO. Em 23/11/2026 as duas coisas
+    # divergiram — cinco edições foram ingeridas numa execução anterior, esta
+    # passada viu +0 e encerrou com "nada a publicar", deixando o hospedado em
+    # 13/11 com o local em 23/11 e o log afirmando que estava tudo em ordem.
+    publicada = versao_publicada()
+    atrasado = publicada is None or publicada < (depois["ultima"] or "")
+    if not novas and not atrasado and not args.forcar:
+        anotar(f"nada novo no portal, e o publicado ({publicada}) já cobre o "
+               f"acervo local ({depois['ultima']}). Encerrado.")
         gravar_sinal("sem novidade", "o portal não publicou edição nova", depois)
         return 0
+    if not novas and atrasado:
+        anotar(f"sem edição nova no portal, mas o publicado ({publicada}) está "
+               f"atrás do acervo local ({depois['ultima']}): publicando")
 
     versao = f"{depois['ultima'].replace('-', '.')}"
     arquivo = SERVIDOR / "dist" / f"diarios-mesquita-v{versao}.db.gz"
