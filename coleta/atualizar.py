@@ -64,9 +64,27 @@ def main() -> int:
                     help="prepara o pacote para publicar (ex.: 1.1.0)")
     args = ap.parse_args()
 
+    # O OCR rodava num venv próprio. Se ele desaparecer — e desapareceu em
+    # 23/11/2026 —, a rotina inteira parava antes de ingerir edição nenhuma,
+    # com a coleta já feita. O passo não exige nada que o venv do projeto não
+    # tenha: pymupdf, a biblioteca padrão e o binário do Tesseract. Então cai
+    # para este intérprete, mas só depois de CONFERIR que ele serve, e dizendo
+    # qual usou — recuo silencioso é pior que a falha.
+    global PASSOS
     if not PYTHON_OCR.exists():
-        print(f"venv do OCR não encontrado em {PYTHON_OCR}", file=sys.stderr)
-        return 2
+        checagem = subprocess.run(
+            [sys.executable, "-c", "import pymupdf"],
+            cwd=BASE, capture_output=True)
+        if checagem.returncode != 0:
+            print(f"venv do OCR não encontrado em {PYTHON_OCR}, e este "
+                  f"intérprete não tem pymupdf: {sys.executable}",
+                  file=sys.stderr)
+            return 2
+        print(f"venv do OCR ausente; o OCR vai rodar com {sys.executable}\n")
+        PASSOS = [
+            (d, [sys.executable if c[0] == str(PYTHON_OCR) else c[0], *c[1:]])
+            for d, c in PASSOS
+        ]
 
     antes = _estado()
     if antes:
